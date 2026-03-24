@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import chromadb
 from sentence_transformers import SentenceTransformer
 import os
@@ -26,6 +26,10 @@ print(f"📊 Documents in DB: {collection.count()}")
 # Routes
 # -----------------------------
 
+@app.route("/ui")
+def ui():
+    return render_template("index.html")
+    
 @app.route("/")
 def home():
     return {
