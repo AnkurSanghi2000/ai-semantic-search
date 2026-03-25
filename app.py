@@ -41,7 +41,52 @@ def home():
         }
     }
 
+@app.route("/init-db", methods=["POST"])
+def initialize_database():
+    try:
+        import time
 
+        print("🚀 Initializing database with 1000 documents...")
+
+        # Prevent duplicate ingestion
+        existing_count = collection.count()
+        if existing_count > 0:
+            return jsonify({
+                "message": "Database already initialized",
+                "documents_existing": existing_count
+            })
+
+        # Prepare documents
+        documents = [f"This is document {i}" for i in range(1000)]
+        metadatas = [{"doc_id": i} for i in range(1000)]
+        ids = [str(i) for i in range(1000)]
+
+        print("📦 Generating embeddings...")
+        start_time = time.time()
+
+        embeddings = model.encode(documents).tolist()
+
+        print("💾 Storing in ChromaDB...")
+        collection.add(
+            documents=documents,
+            metadatas=metadatas,
+            ids=ids,
+            embeddings=embeddings
+        )
+
+        end_time = time.time()
+
+        return jsonify({
+            "message": "✅ Database initialized successfully",
+            "documents_added": len(documents),
+            "total_documents": collection.count(),
+            "time_taken_seconds": round(end_time - start_time, 2)
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+        
 @app.route("/search", methods=["GET", "POST"])
 def search():
     try:
@@ -148,6 +193,7 @@ def add_document():
 @app.route("/routes")
 def list_routes():
     return str(app.url_map)
+
 
 # -----------------------------
 # Run Server
